@@ -44,4 +44,28 @@ contract Governance {
             _endTimestamp
         );
     }
+
+    function setMinVotes(uint256 _id, uint256 _minVotes) public {
+        votings[_id].minVotes = _minVotes;
+    }
+
+    function setRejectedPercReq(uint256 _id, uint256 _rejectPercentageReq)
+        public
+    {
+        votings[_id].rejectPercentageReq = _rejectPercentageReq;
+    }
+
+    function setSettlementPercReq(uint256 _id, uint256 _settlementPercentageReq)
+        public
+    {
+        votings[_id].settlementPercentageReq = _settlementPercentageReq;
+    }
+
+    function setStarTimestamp(uint256 _id, uint256 _startTimestamp) public {
+        votings[_id].startTimestamp = _startTimestamp;
+    }
+
+    function setEndTimestamp(uint256 _id, uint256 _endTimestamp) public {
+        votings[_id].endTimestamp = _endTimestamp;
+    }
 }
