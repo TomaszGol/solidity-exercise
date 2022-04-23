@@ -18,13 +18,22 @@ contract Governance {
         uint256 endTimestamp;
     }
 
+    address private owner;
+
     mapping(uint256 => Voting) public votings;
 
     uint256 public votingCounter;
 
     mapping(address => bool) public voters;
 
-    constructor() {}
+    modifier onlyOwner() {
+        require(msg.sender == owner, "User is not a owner");
+        _;
+    }
+
+    constructor() {
+        owner = msg.sender;
+    }
 
     function addVoting(
         string memory _title,
@@ -33,7 +42,7 @@ contract Governance {
         uint256 _settlementPercentageReq,
         uint256 _startTimestamp,
         uint256 _endTimestamp
-    ) public {
+    ) public onlyOwner {
         votingCounter++;
         votings[votingCounter] = Voting(
             votingCounter,
@@ -49,33 +58,46 @@ contract Governance {
         );
     }
 
-    function setMinVotes(uint256 _id, uint256 _minVotes) public {
+    function setMinVotes(uint256 _id, uint256 _minVotes) public onlyOwner {
         votings[_id].minVotes = _minVotes;
     }
 
     function setRejectedPercReq(uint256 _id, uint256 _rejectPercentageReq)
         public
+        onlyOwner
     {
         votings[_id].rejectPercentageReq = _rejectPercentageReq;
     }
 
     function setSettlementPercReq(uint256 _id, uint256 _settlementPercentageReq)
         public
+        onlyOwner
     {
         votings[_id].settlementPercentageReq = _settlementPercentageReq;
     }
 
-    function setStarTimestamp(uint256 _id, uint256 _startTimestamp) public {
+    function setStarTimestamp(uint256 _id, uint256 _startTimestamp)
+        public
+        onlyOwner
+    {
         votings[_id].startTimestamp = _startTimestamp;
     }
 
-    function setEndTimestamp(uint256 _id, uint256 _endTimestamp) public {
+    function setEndTimestamp(uint256 _id, uint256 _endTimestamp)
+        public
+        onlyOwner
+    {
         votings[_id].endTimestamp = _endTimestamp;
     }
 
     function vote(uint256 _id) public {
         require(!voters[msg.sender], "User already voted");
-        require(_id > 0 && _id <= votingCounter, "Voting dont exist");
+        // require(
+        //     votings[_id].startTimestamp < block.timestamp &&
+        //         votings[_id].endTimestamp > block.timestamp,
+        //     "Voting is not available"
+        // );
+        require(_id > 0 && _id <= votingCounter, "Voting doesnt exist");
         voters[msg.sender] = true;
         if (true) {
             votings[_id].forVoteCount++;

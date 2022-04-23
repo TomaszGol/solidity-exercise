@@ -12,7 +12,7 @@ describe("Token contract", function () {
 
   beforeEach(async function () {
     // Get the ContractFactory and Signers here.
-    const Governance = await ethers.getContractFactory("Governance");
+    Governance = await ethers.getContractFactory("Governance");
 
     [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
 
@@ -22,7 +22,6 @@ describe("Token contract", function () {
   describe("Governance", function () {
     it("Should create and being writed to map", async function () {
       await app.addVoting("Test1", 10, 30, 70, 1648569500, 1648589500);
-      // console.log(app.votings[1]);
       const voting = await app.votings(1);
 
       expect(voting.title).to.equal("Test1");
@@ -34,6 +33,14 @@ describe("Token contract", function () {
       expect(voting.settlementPercentageReq.toNumber()).to.equal(70);
       expect(voting.startTimestamp.toNumber()).to.equal(1648569500);
       expect(voting.endTimestamp.toNumber()).to.equal(1648589500);
+    });
+
+    it("Should return access error", async function () {
+      await expect(
+        app
+          .connect(addr1)
+          .addVoting("Test1", 10, 30, 70, 1648569500, 1648589500)
+      ).to.be.revertedWith("User is not a owner");
     });
 
     it("Should be able to change vars in voting", async function () {
@@ -78,7 +85,7 @@ describe("Token contract", function () {
     it("Should return error with wrong id", async function () {
       await app.addVoting("Test1", 10, 30, 70, 1648569500, 1648589500);
 
-      await expect(app.vote(99)).to.be.revertedWith("Voting dont exist");
+      await expect(app.vote(99)).to.be.revertedWith("Voting doesnt exist");
     });
   });
 });
