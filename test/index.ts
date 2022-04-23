@@ -10,6 +10,7 @@ describe("Governance", function () {
     // console.log(app.votings[1]);
     const voting = await app.votings(1);
     expect(voting.title).to.equal("Test1");
+    expect(voting.voteCount).to.equal(0);
     expect(voting.minVotes.toNumber()).to.equal(10);
     expect(voting.rejectPercentageReq.toNumber()).to.equal(30);
     expect(voting.settlementPercentageReq.toNumber()).to.equal(70);

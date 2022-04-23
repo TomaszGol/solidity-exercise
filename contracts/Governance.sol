@@ -8,6 +8,7 @@ contract Governance {
     struct Voting {
         uint256 id;
         string title;
+        uint256 voteCount;
         uint256 minVotes;
         uint256 rejectPercentageReq;
         uint256 settlementPercentageReq;
@@ -35,6 +36,7 @@ contract Governance {
         votings[votingCounter] = Voting(
             votingCounter,
             _title,
+            0,
             _minVotes,
             _rejectPercentageReq,
             _settlementPercentageReq,
