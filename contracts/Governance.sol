@@ -18,6 +18,15 @@ contract Governance {
         uint256 endTimestamp;
     }
 
+    struct expiredVoting {
+        uint256 id;
+        string title;
+        uint256 forVoteCount;
+        uint256 againstVoteCount;
+        uint256 abstainVoteCount;
+        uint256 percentageResult;
+    }
+
     address private owner;
 
     mapping(uint256 => Voting) public votings;
@@ -99,12 +108,22 @@ contract Governance {
         // );
         require(_id > 0 && _id <= votingCounter, "Voting doesnt exist");
         voters[msg.sender] = true;
-        if (true) {
+        votings[_id].abstainVoteCount++;
+    }
+
+    function vote(uint256 _id, bool forOrAgainst) public {
+        require(!voters[msg.sender], "User already voted");
+        // require(
+        //     votings[_id].startTimestamp < block.timestamp &&
+        //         votings[_id].endTimestamp > block.timestamp,
+        //     "Voting is not available"
+        // );
+        require(_id > 0 && _id <= votingCounter, "Voting doesnt exist");
+        voters[msg.sender] = true;
+        if (forOrAgainst) {
             votings[_id].forVoteCount++;
-        } else if (false) {
+        } else if (!forOrAgainst) {
             votings[_id].againstVoteCount++;
-        } else {
-            votings[_id].abstainVoteCount++;
         }
     }
 
@@ -113,5 +132,20 @@ contract Governance {
             votings[_id].againstVoteCount +
             votings[_id].abstainVoteCount;
         return (votings[_id].forVoteCount / sumOfVotes) * 100;
+    }
+
+    function summary(uint256 _id) public view returns (bool) {
+        console.log("Summary");
+
+        for (uint256 i = 1; i <= votingCounter; i++) {
+            if (votings[i].endTimestamp < block.timestamp) {
+                // console.log(
+                //     votings[i].title + "(xxx) \n votes for: " + votings[i].forVoteCount + "against: " + votings[i].againstVoteCount + "abstain " + votings[i].abstainVoteCount,
+                // );
+                console.log("${votins[i].title}");
+            } else {
+                return false;
+            }
+        }
     }
 }

@@ -67,25 +67,46 @@ describe("Token contract", function () {
       expect(voting.endTimestamp.toNumber()).to.equal(1648589900);
     });
 
-    it("Should add vote", async function () {
+    it("Should add abstain vote", async function () {
       await app.addVoting("Test1", 10, 30, 70, 1648569500, 1648589500);
-      await app.vote(1);
+      await app["vote(uint256)"](1);
+
+      let voting = await app.votings(1);
+
+      expect(voting.abstainVoteCount.toNumber()).to.equal(1);
+    });
+
+    it("Should add for vote", async function () {
+      await app.addVoting("Test1", 10, 30, 70, 1648569500, 1648589500);
+      await app["vote(uint256,bool)"](1, true);
       let voting = await app.votings(1);
 
       expect(voting.forVoteCount.toNumber()).to.equal(1);
     });
 
+    it("Should add against vote", async function () {
+      await app.addVoting("Test1", 10, 30, 70, 1648569500, 1648589500);
+      await app["vote(uint256,bool)"](1, false);
+      let voting = await app.votings(1);
+
+      expect(voting.againstVoteCount.toNumber()).to.equal(1);
+    });
+
     it("Should return voting error", async function () {
       await app.addVoting("Test1", 10, 30, 70, 1648569500, 1648589500);
-      await app.vote(1);
+      await app["vote(uint256)"](1);
 
-      await expect(app.vote(1)).to.be.revertedWith("User already voted");
+      await expect(app["vote(uint256)"](1)).to.be.revertedWith(
+        "User already voted"
+      );
     });
 
     it("Should return error with wrong id", async function () {
       await app.addVoting("Test1", 10, 30, 70, 1648569500, 1648589500);
 
-      await expect(app.vote(99)).to.be.revertedWith("Voting doesnt exist");
+      await expect(app["vote(uint256)"](99)).to.be.revertedWith(
+        "Voting doesnt exist"
+      );
     });
   });
 });
