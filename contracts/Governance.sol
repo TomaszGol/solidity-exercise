@@ -35,13 +35,23 @@ contract Governance {
 
     mapping(address => bool) public voters;
 
+    mapping(address => bool) whitelist;
+
     modifier onlyOwner() {
         require(msg.sender == owner, "User is not a owner");
         _;
     }
 
+    modifier isOnWhitelist(address _address) {
+        require(whitelist[_address], "You need to be on whitelsit");
+        _;
+    }
+
     constructor() {
         owner = msg.sender;
+        whitelist[0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266] = true;
+        whitelist[0x70997970C51812dc3A010C7d01b50e0d17dc79C8] = true;
+        whitelist[0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC] = true;
     }
 
     function addVoting(
@@ -99,26 +109,33 @@ contract Governance {
         votings[_id].endTimestamp = _endTimestamp;
     }
 
-    function vote(uint256 _id) public {
+    function addUser(address _addressToWhitelist) public onlyOwner {
+        whitelist[_addressToWhitelist] = true;
+    }
+
+    function vote(uint256 _id) public isOnWhitelist(msg.sender) {
         require(!voters[msg.sender], "User already voted");
-        // require(
-        //     votings[_id].startTimestamp < block.timestamp &&
-        //         votings[_id].endTimestamp > block.timestamp,
-        //     "Voting is not available"
-        // );
         require(_id > 0 && _id <= votingCounter, "Voting doesnt exist");
+        require(
+            votings[_id].startTimestamp < block.timestamp &&
+                votings[_id].endTimestamp > block.timestamp,
+            "Voting is not available"
+        );
         voters[msg.sender] = true;
         votings[_id].abstainVoteCount++;
     }
 
-    function vote(uint256 _id, bool forOrAgainst) public {
+    function vote(uint256 _id, bool forOrAgainst)
+        public
+        isOnWhitelist(msg.sender)
+    {
         require(!voters[msg.sender], "User already voted");
-        // require(
-        //     votings[_id].startTimestamp < block.timestamp &&
-        //         votings[_id].endTimestamp > block.timestamp,
-        //     "Voting is not available"
-        // );
         require(_id > 0 && _id <= votingCounter, "Voting doesnt exist");
+        require(
+            votings[_id].startTimestamp < block.timestamp &&
+                votings[_id].endTimestamp > block.timestamp,
+            "Voting is not available"
+        );
         voters[msg.sender] = true;
         if (forOrAgainst) {
             votings[_id].forVoteCount++;

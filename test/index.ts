@@ -10,6 +10,13 @@ describe("Token contract", function () {
   let addr2;
   let addrs;
 
+  const votingName = "Test1";
+  const minVotes = 10;
+  const rejectPercentageReq = 30;
+  const settlementPercentageReq = 70;
+  const startTimestamp = 1648569500;
+  const endTimestamp = 1653238800;
+
   beforeEach(async function () {
     // Get the ContractFactory and Signers here.
     Governance = await ethers.getContractFactory("Governance");
@@ -21,7 +28,14 @@ describe("Token contract", function () {
 
   describe("Governance", function () {
     it("Should create and being writed to map", async function () {
-      await app.addVoting("Test1", 10, 30, 70, 1648569500, 1648589500);
+      await app.addVoting(
+        votingName,
+        minVotes,
+        rejectPercentageReq,
+        settlementPercentageReq,
+        startTimestamp,
+        endTimestamp
+      );
       const voting = await app.votings(1);
 
       expect(voting.title).to.equal("Test1");
@@ -32,21 +46,35 @@ describe("Token contract", function () {
       expect(voting.rejectPercentageReq.toNumber()).to.equal(30);
       expect(voting.settlementPercentageReq.toNumber()).to.equal(70);
       expect(voting.startTimestamp.toNumber()).to.equal(1648569500);
-      expect(voting.endTimestamp.toNumber()).to.equal(1648589500);
+      expect(voting.endTimestamp.toNumber()).to.equal(1653238800);
     });
 
     it("Should return access error", async function () {
       await expect(
         app
           .connect(addr1)
-          .addVoting("Test1", 10, 30, 70, 1648569500, 1648589500)
+          .addVoting(
+            votingName,
+            minVotes,
+            rejectPercentageReq,
+            settlementPercentageReq,
+            startTimestamp,
+            endTimestamp
+          )
       ).to.be.revertedWith("User is not a owner");
     });
 
     it("Should be able to change vars in voting", async function () {
-      await app.addVoting("Test1", 10, 30, 70, 1648569500, 1648589500);
+      await app.addVoting(
+        votingName,
+        minVotes,
+        rejectPercentageReq,
+        settlementPercentageReq,
+        startTimestamp,
+        endTimestamp
+      );
 
-      const changeMinVotes = await app.setMinVotes(1, 20);
+      await app.setMinVotes(1, 20);
       let voting = await app.votings(1);
       expect(voting.minVotes.toNumber()).to.equal(20);
 
@@ -67,8 +95,45 @@ describe("Token contract", function () {
       expect(voting.endTimestamp.toNumber()).to.equal(1648589900);
     });
 
+    it("Should return voting not availavle error", async function () {
+      await app.addVoting(
+        votingName,
+        minVotes,
+        rejectPercentageReq,
+        settlementPercentageReq,
+        startTimestamp,
+        1648589500
+      );
+
+      await expect(app["vote(uint256)"](1)).to.be.revertedWith(
+        "Voting is not available"
+      );
+    });
+
+    it("Should return not whitelisted error", async function () {
+      await app.addVoting(
+        votingName,
+        minVotes,
+        rejectPercentageReq,
+        settlementPercentageReq,
+        startTimestamp,
+        endTimestamp
+      );
+
+      await expect(
+        app.connect(addrs[4])["vote(uint256)"](1)
+      ).to.be.revertedWith("You need to be on whitelsit");
+    });
+
     it("Should add abstain vote", async function () {
-      await app.addVoting("Test1", 10, 30, 70, 1648569500, 1648589500);
+      await app.addVoting(
+        votingName,
+        minVotes,
+        rejectPercentageReq,
+        settlementPercentageReq,
+        startTimestamp,
+        endTimestamp
+      );
       await app["vote(uint256)"](1);
 
       let voting = await app.votings(1);
@@ -77,7 +142,14 @@ describe("Token contract", function () {
     });
 
     it("Should add for vote", async function () {
-      await app.addVoting("Test1", 10, 30, 70, 1648569500, 1648589500);
+      await app.addVoting(
+        votingName,
+        minVotes,
+        rejectPercentageReq,
+        settlementPercentageReq,
+        startTimestamp,
+        endTimestamp
+      );
       await app["vote(uint256,bool)"](1, true);
       let voting = await app.votings(1);
 
@@ -85,7 +157,14 @@ describe("Token contract", function () {
     });
 
     it("Should add against vote", async function () {
-      await app.addVoting("Test1", 10, 30, 70, 1648569500, 1648589500);
+      await app.addVoting(
+        votingName,
+        minVotes,
+        rejectPercentageReq,
+        settlementPercentageReq,
+        startTimestamp,
+        endTimestamp
+      );
       await app["vote(uint256,bool)"](1, false);
       let voting = await app.votings(1);
 
@@ -93,7 +172,14 @@ describe("Token contract", function () {
     });
 
     it("Should return voting error", async function () {
-      await app.addVoting("Test1", 10, 30, 70, 1648569500, 1648589500);
+      await app.addVoting(
+        votingName,
+        minVotes,
+        rejectPercentageReq,
+        settlementPercentageReq,
+        startTimestamp,
+        endTimestamp
+      );
       await app["vote(uint256)"](1);
 
       await expect(app["vote(uint256)"](1)).to.be.revertedWith(
@@ -102,7 +188,14 @@ describe("Token contract", function () {
     });
 
     it("Should return error with wrong id", async function () {
-      await app.addVoting("Test1", 10, 30, 70, 1648569500, 1648589500);
+      await app.addVoting(
+        votingName,
+        minVotes,
+        rejectPercentageReq,
+        settlementPercentageReq,
+        startTimestamp,
+        endTimestamp
+      );
 
       await expect(app["vote(uint256)"](99)).to.be.revertedWith(
         "Voting doesnt exist"
