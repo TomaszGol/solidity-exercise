@@ -25,17 +25,20 @@ contract Governance {
         uint256 againstVoteCount;
         uint256 abstainVoteCount;
         uint256 percentageResult;
+        string result;
     }
 
     address private owner;
 
     mapping(uint256 => Voting) public votings;
 
+    mapping(uint256 => expiredVoting) public expiredVotings;
+
     uint256 public votingCounter;
 
     mapping(address => bool) public voters;
 
-    mapping(address => bool) whitelist;
+    mapping(address => bool) private whitelist;
 
     modifier onlyOwner() {
         require(msg.sender == owner, "User is not a owner");
@@ -75,6 +78,27 @@ contract Governance {
             _startTimestamp,
             _endTimestamp
         );
+    }
+
+    // Created for test purposes
+    function forVoteCount(uint256 _id, uint256 _forVoteCount) public onlyOwner {
+        votings[_id].forVoteCount = _forVoteCount;
+    }
+
+    // Created for test purposes
+    function againstVoteCount(uint256 _id, uint256 _againstVoteCount)
+        public
+        onlyOwner
+    {
+        votings[_id].againstVoteCount = _againstVoteCount;
+    }
+
+    // Created for test purposes
+    function abstainVoteCount(uint256 _id, uint256 _abstainVoteCount)
+        public
+        onlyOwner
+    {
+        votings[_id].abstainVoteCount = _abstainVoteCount;
     }
 
     function setMinVotes(uint256 _id, uint256 _minVotes) public onlyOwner {
@@ -144,24 +168,48 @@ contract Governance {
         }
     }
 
-    function countResult(uint256 _id) public view returns (uint256) {
+    function countResult(uint256 _id) private view returns (uint256) {
         uint256 sumOfVotes = votings[_id].forVoteCount +
             votings[_id].againstVoteCount +
             votings[_id].abstainVoteCount;
-        return (votings[_id].forVoteCount / sumOfVotes) * 100;
+        return ((votings[_id].forVoteCount * 100) / sumOfVotes);
     }
 
-    function summary(uint256 _id) public view returns (bool) {
-        console.log("Summary");
-
-        for (uint256 i = 1; i <= votingCounter; i++) {
-            if (votings[i].endTimestamp < block.timestamp) {
-                // console.log(
-                //     votings[i].title + "(xxx) \n votes for: " + votings[i].forVoteCount + "against: " + votings[i].againstVoteCount + "abstain " + votings[i].abstainVoteCount,
-                // );
-                console.log("${votins[i].title}");
-            } else {
-                return false;
+    function result() public {
+        for (uint256 _id = 1; _id <= votingCounter; _id++) {
+            if (votings[_id].endTimestamp < block.timestamp) {
+                uint256 votingResult = countResult(_id);
+                if (votingResult > votings[_id].settlementPercentageReq) {
+                    expiredVotings[_id] = expiredVoting(
+                        _id,
+                        votings[_id].title,
+                        votings[_id].forVoteCount,
+                        votings[_id].againstVoteCount,
+                        votings[_id].abstainVoteCount,
+                        votingResult,
+                        "Adopted"
+                    );
+                } else if (votingResult < votings[_id].rejectPercentageReq) {
+                    expiredVotings[_id] = expiredVoting(
+                        _id,
+                        votings[_id].title,
+                        votings[_id].forVoteCount,
+                        votings[_id].againstVoteCount,
+                        votings[_id].abstainVoteCount,
+                        votingResult,
+                        "Rejected"
+                    );
+                } else {
+                    expiredVotings[_id] = expiredVoting(
+                        _id,
+                        votings[_id].title,
+                        votings[_id].forVoteCount,
+                        votings[_id].againstVoteCount,
+                        votings[_id].abstainVoteCount,
+                        votingResult,
+                        "Unresolved"
+                    );
+                }
             }
         }
     }

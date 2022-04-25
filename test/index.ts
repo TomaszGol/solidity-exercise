@@ -201,5 +201,44 @@ describe("Token contract", function () {
         "Voting doesnt exist"
       );
     });
+
+    it("Should add expired votings to summary list", async function () {
+      await app.addVoting(
+        votingName,
+        minVotes,
+        rejectPercentageReq,
+        settlementPercentageReq,
+        startTimestamp,
+        endTimestamp
+      );
+      await app.addVoting("Test2", 5, 25, 75, startTimestamp, 1648589500);
+      await app.forVoteCount(2, 20);
+      await app.againstVoteCount(2, 2);
+
+      await app.addVoting("Test3", 5, 25, 75, startTimestamp, 1648589500);
+      await app.forVoteCount(3, 2);
+      await app.againstVoteCount(3, 20);
+
+      await app.addVoting("Test4", 5, 25, 75, startTimestamp, endTimestamp);
+
+      await app.addVoting("Test5", 5, 25, 75, startTimestamp, 1648589500);
+      await app.forVoteCount(5, 10);
+      await app.againstVoteCount(5, 10);
+      await app.againstVoteCount(5, 20);
+
+      await app.result();
+
+      let expiredVoting2 = await app.expiredVotings(2);
+      let expiredVoting3 = await app.expiredVotings(3);
+      let expiredVoting5 = await app.expiredVotings(5);
+
+      // expect(expiredVoting2).to.equal("Test2");
+      expect(expiredVoting3).to.equal(
+        await app.expiredVoting(3, "Test3", 2, 20, 0, 9, "Rejected")
+      );
+      expect(expiredVoting5).to.equal(
+        await app.expiredVoting(5, "Test5", 10, 10, 20, 33, "Unresolved")
+      );
+    });
   });
 });
