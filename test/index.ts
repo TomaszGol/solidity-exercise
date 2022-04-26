@@ -231,14 +231,12 @@ describe("Token contract", function () {
       let expiredVoting2 = await app.expiredVotings(2);
       let expiredVoting3 = await app.expiredVotings(3);
       let expiredVoting5 = await app.expiredVotings(5);
-
-      // expect(expiredVoting2).to.equal("Test2");
-      expect(expiredVoting3).to.equal(
-        await app.expiredVoting(3, "Test3", 2, 20, 0, 9, "Rejected")
-      );
-      expect(expiredVoting5).to.equal(
-        await app.expiredVoting(5, "Test5", 10, 10, 20, 33, "Unresolved")
-      );
+      expect(expiredVoting2.result).to.equal("Adopted");
+      expect(expiredVoting3.result).to.equal("Rejected");
+      expect(expiredVoting5.result).to.equal("Unresolved");
+      // Check for '4' that wasn't expired
+      let expiredVoting4 = await app.expiredVotings(4);
+      expect(expiredVoting4.result).to.equal("");
     });
   });
 });

@@ -18,7 +18,7 @@ contract Governance {
         uint256 endTimestamp;
     }
 
-    struct expiredVoting {
+    struct ExpiredVoting {
         uint256 id;
         string title;
         uint256 forVoteCount;
@@ -32,7 +32,7 @@ contract Governance {
 
     mapping(uint256 => Voting) public votings;
 
-    mapping(uint256 => expiredVoting) public expiredVotings;
+    mapping(uint256 => ExpiredVoting) public expiredVotings;
 
     uint256 public votingCounter;
 
@@ -180,7 +180,7 @@ contract Governance {
             if (votings[_id].endTimestamp < block.timestamp) {
                 uint256 votingResult = countResult(_id);
                 if (votingResult > votings[_id].settlementPercentageReq) {
-                    expiredVotings[_id] = expiredVoting(
+                    expiredVotings[_id] = ExpiredVoting(
                         _id,
                         votings[_id].title,
                         votings[_id].forVoteCount,
@@ -190,7 +190,7 @@ contract Governance {
                         "Adopted"
                     );
                 } else if (votingResult < votings[_id].rejectPercentageReq) {
-                    expiredVotings[_id] = expiredVoting(
+                    expiredVotings[_id] = ExpiredVoting(
                         _id,
                         votings[_id].title,
                         votings[_id].forVoteCount,
@@ -200,7 +200,7 @@ contract Governance {
                         "Rejected"
                     );
                 } else {
-                    expiredVotings[_id] = expiredVoting(
+                    expiredVotings[_id] = ExpiredVoting(
                         _id,
                         votings[_id].title,
                         votings[_id].forVoteCount,
