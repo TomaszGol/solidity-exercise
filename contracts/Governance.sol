@@ -4,6 +4,12 @@ pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 
 contract Governance {
+    enum VoteOptions {
+        FOR,
+        AGAINST,
+        ABSTAIN
+    }
+
     // Voting model
     struct Voting {
         uint256 id;
@@ -80,18 +86,6 @@ contract Governance {
         vot.settlementPercentageReq = _settlementPercentageReq;
         vot.startTimestamp = _startTimestamp;
         vot.endTimestamp = _endTimestamp;
-        // votings[votingCounter] = Voting(
-        //     votingCounter,
-        //     _title,
-        //     0,
-        //     0,
-        //     0,
-        //     _minVotes,
-        //     _rejectPercentageReq,
-        //     _settlementPercentageReq,
-        //     _startTimestamp,
-        //     _endTimestamp
-        // );
     }
 
     // Created for test purposes
@@ -151,19 +145,7 @@ contract Governance {
         whitelist[_addressToWhitelist] = true;
     }
 
-    function vote(uint256 _id) public isOnWhitelist(msg.sender) {
-        require(!votings[_id].voters[msg.sender], "User already voted");
-        require(_id > 0 && _id <= votingCounter, "Voting doesnt exist");
-        require(
-            votings[_id].startTimestamp < block.timestamp &&
-                votings[_id].endTimestamp > block.timestamp,
-            "Voting is not available"
-        );
-        votings[_id].voters[msg.sender] = true;
-        votings[_id].abstainVoteCount++;
-    }
-
-    function vote(uint256 _id, bool forOrAgainst)
+    function vote(uint256 _id, VoteOptions option)
         public
         isOnWhitelist(msg.sender)
     {
@@ -175,11 +157,25 @@ contract Governance {
             "Voting is not available"
         );
         votings[_id].voters[msg.sender] = true;
-        if (forOrAgainst) {
-            votings[_id].forVoteCount++;
-        } else if (!forOrAgainst) {
-            votings[_id].againstVoteCount++;
+        if (option == VoteOptions.FOR) {
+            increaseForVote(_id);
+        } else if (option == VoteOptions.AGAINST) {
+            increaseAgainstVote(_id);
+        } else {
+            increaseAbstainVote(_id);
         }
+    }
+
+    function increaseForVote(uint256 _id) private {
+        votings[_id].forVoteCount++;
+    }
+
+    function increaseAgainstVote(uint256 _id) private {
+        votings[_id].againstVoteCount++;
+    }
+
+    function increaseAbstainVote(uint256 _id) private {
+        votings[_id].abstainVoteCount++;
     }
 
     function countResult(uint256 _id) private view returns (uint256) {
