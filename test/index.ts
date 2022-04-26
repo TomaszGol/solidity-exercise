@@ -176,6 +176,24 @@ describe("Token contract", function () {
       );
     });
 
+    it("Should add user to whitelist", async function () {
+      await app.addVoting(
+        votingName,
+        minVotes,
+        rejectPercentageReq,
+        settlementPercentageReq,
+        startTimestamp,
+        endTimestamp
+      );
+
+      await expect(app.connect(addrs[4]).vote(0, 0)).to.be.revertedWith(
+        "You need to be on whitelsit"
+      );
+
+      await app.addUserToWhitelist(addrs[4].address);
+      await expect(app.connect(addrs[4]).vote(0, 0));
+    });
+
     it("Should add abstain vote", async function () {
       await app.addVoting(
         votingName,

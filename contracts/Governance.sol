@@ -66,6 +66,10 @@ contract Governance {
         whitelist[0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC] = true;
     }
 
+    function addUserToWhitelist(address _user) public onlyOwner {
+        whitelist[_user] = true;
+    }
+
     function addVoting(
         string memory _title,
         uint256 _minVotes,
