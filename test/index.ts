@@ -28,6 +28,8 @@ describe("Token contract", function () {
 
   describe("Governance", function () {
     it("Should create and be writed to map", async function () {
+      const beforeAddCounter = await app.votingCounter();
+
       await app.addVoting(
         votingName,
         minVotes,
@@ -36,8 +38,13 @@ describe("Token contract", function () {
         startTimestamp,
         endTimestamp
       );
-      const voting = await app.votings(1);
+      const afterAddCounter = await app.votingCounter();
 
+      const voting = await app.votings(0);
+
+      expect(beforeAddCounter.toNumber() + 1).to.equal(
+        afterAddCounter.toNumber()
+      );
       expect(voting.title).to.equal("Test1");
       expect(voting.forVoteCount).to.equal(0);
       expect(voting.againstVoteCount).to.equal(0);
@@ -64,7 +71,7 @@ describe("Token contract", function () {
       ).to.be.revertedWith("User is not a owner");
     });
 
-    it("Should be able to change vars in voting", async function () {
+    it("Should set minVotes", async function () {
       await app.addVoting(
         votingName,
         minVotes,
@@ -74,24 +81,68 @@ describe("Token contract", function () {
         endTimestamp
       );
 
-      await app.setMinVotes(1, 20);
-      let voting = await app.votings(1);
+      await app.setMinVotes(0, 20);
+      let voting = await app.votings(0);
       expect(voting.minVotes.toNumber()).to.equal(20);
+    });
 
-      await app.setRejectedPercReq(1, 20);
-      voting = await app.votings(1);
+    it("Should set setRejectedPercReq", async function () {
+      await app.addVoting(
+        votingName,
+        minVotes,
+        rejectPercentageReq,
+        settlementPercentageReq,
+        startTimestamp,
+        endTimestamp
+      );
+
+      await app.setRejectedPercReq(0, 20);
+      let voting = await app.votings(0);
       expect(voting.rejectPercentageReq.toNumber()).to.equal(20);
+    });
 
-      await app.setSettlementPercReq(1, 65);
-      voting = await app.votings(1);
+    it("Should set settlementPercentageReq", async function () {
+      await app.addVoting(
+        votingName,
+        minVotes,
+        rejectPercentageReq,
+        settlementPercentageReq,
+        startTimestamp,
+        endTimestamp
+      );
+
+      await app.setSettlementPercReq(0, 65);
+      let voting = await app.votings(0);
       expect(voting.settlementPercentageReq.toNumber()).to.equal(65);
+    });
 
-      await app.setStarTimestamp(1, 1648569600);
-      voting = await app.votings(1);
+    it("Should set startTimestamp", async function () {
+      await app.addVoting(
+        votingName,
+        minVotes,
+        rejectPercentageReq,
+        settlementPercentageReq,
+        startTimestamp,
+        endTimestamp
+      );
+
+      await app.setStarTimestamp(0, 1648569600);
+      let voting = await app.votings(0);
       expect(voting.startTimestamp.toNumber()).to.equal(1648569600);
+    });
 
-      await app.setEndTimestamp(1, 1648589900);
-      voting = await app.votings(1);
+    it("Should set endTimestamp", async function () {
+      await app.addVoting(
+        votingName,
+        minVotes,
+        rejectPercentageReq,
+        settlementPercentageReq,
+        startTimestamp,
+        endTimestamp
+      );
+
+      await app.setEndTimestamp(0, 1648589900);
+      let voting = await app.votings(0);
       expect(voting.endTimestamp.toNumber()).to.equal(1648589900);
     });
 
@@ -105,7 +156,7 @@ describe("Token contract", function () {
         1648589500
       );
 
-      await expect(app.vote(1, 0)).to.be.revertedWith(
+      await expect(app.vote(0, 0)).to.be.revertedWith(
         "Voting is not available"
       );
     });
@@ -134,8 +185,8 @@ describe("Token contract", function () {
         startTimestamp,
         endTimestamp
       );
-      await app.vote(1, 2);
-      let voting = await app.votings(1);
+      await app.vote(0, 2);
+      let voting = await app.votings(0);
 
       expect(voting.abstainVoteCount.toNumber()).to.equal(1);
     });
@@ -149,8 +200,8 @@ describe("Token contract", function () {
         startTimestamp,
         endTimestamp
       );
-      await app.vote(1, 0);
-      let voting = await app.votings(1);
+      await app.vote(0, 0);
+      let voting = await app.votings(0);
 
       expect(voting.forVoteCount.toNumber()).to.equal(1);
     });
@@ -164,8 +215,8 @@ describe("Token contract", function () {
         startTimestamp,
         endTimestamp
       );
-      await app.vote(1, 1);
-      let voting = await app.votings(1);
+      await app.vote(0, 1);
+      let voting = await app.votings(0);
 
       expect(voting.againstVoteCount.toNumber()).to.equal(1);
     });
@@ -179,9 +230,9 @@ describe("Token contract", function () {
         startTimestamp,
         endTimestamp
       );
-      await app.vote(1, 2);
+      await app.vote(0, 2);
 
-      await expect(app.vote(1, 1)).to.be.revertedWith("User already voted");
+      await expect(app.vote(0, 1)).to.be.revertedWith("User already voted");
     });
 
     it("Should return error with wrong id", async function () {
@@ -197,6 +248,64 @@ describe("Token contract", function () {
       await expect(app.vote(99, 0)).to.be.revertedWith("Voting doesnt exist");
     });
 
+    it("Should return result of accepted voting", async function () {
+      await app.addVoting(
+        votingName,
+        1,
+        rejectPercentageReq,
+        settlementPercentageReq,
+        startTimestamp,
+        endTimestamp
+      );
+
+      await app.vote(0, 0);
+      await app.setEndTimestamp(0, 1648589500);
+      await app.getResultById(0);
+
+      let expiredVoting = await app.expiredVotings(0);
+
+      expect(expiredVoting.result).to.equal("Accepted");
+    });
+
+    it("Should return result of rejected voting", async function () {
+      await app.addVoting(
+        votingName,
+        1,
+        rejectPercentageReq,
+        settlementPercentageReq,
+        startTimestamp,
+        endTimestamp
+      );
+
+      await app.vote(0, 1);
+      await app.setEndTimestamp(0, 1648589500);
+      await app.getResultById(0);
+
+      let expiredVoting = await app.expiredVotings(0);
+
+      expect(expiredVoting.result).to.equal("Rejected");
+    });
+
+    it("Should return result of unresolved voting", async function () {
+      await app.addVoting(
+        votingName,
+        1,
+        rejectPercentageReq,
+        settlementPercentageReq,
+        startTimestamp,
+        endTimestamp
+      );
+
+      await app.vote(0, 1);
+      await app.connect(addr1).vote(0, 0);
+      await app.setEndTimestamp(0, 1648589500);
+      await app.getResultById(0);
+
+      let expiredVoting = await app.expiredVotings(0);
+
+      expect(expiredVoting.result).to.equal("Unresolved");
+    });
+
     it("Should add expired votings to summary list", async function () {
       await app.addVoting(
         votingName,
@@ -206,31 +315,33 @@ describe("Token contract", function () {
         startTimestamp,
         endTimestamp
       );
-      await app.addVoting("Test2", 5, 25, 75, startTimestamp, 1648589500);
-      await app.forVoteCount(2, 20);
-      await app.againstVoteCount(2, 2);
+      await app.addVoting("Test2", 1, 25, 75, startTimestamp, endTimestamp);
 
-      await app.addVoting("Test3", 5, 25, 75, startTimestamp, 1648589500);
-      await app.forVoteCount(3, 2);
-      await app.againstVoteCount(3, 20);
+      await app.vote(1, 0);
+      await app.setEndTimestamp(1, 1648589500);
 
-      await app.addVoting("Test4", 5, 25, 75, startTimestamp, endTimestamp);
+      await app.addVoting("Test3", 1, 25, 75, startTimestamp, endTimestamp);
+      await app.vote(2, 1);
+      await app.setEndTimestamp(2, 1648589500);
 
-      await app.addVoting("Test5", 5, 25, 75, startTimestamp, 1648589500);
-      await app.forVoteCount(5, 10);
-      await app.againstVoteCount(5, 10);
-      await app.againstVoteCount(5, 20);
+      await app.addVoting("Test4", 1, 25, 75, startTimestamp, endTimestamp);
 
-      await app.result();
+      await app.addVoting("Test5", 1, 25, 75, startTimestamp, endTimestamp);
+      await app.vote(4, 1);
+      await app.connect(addr1).vote(4, 0);
+      await app.connect(addr2).vote(4, 2);
+      await app.setEndTimestamp(4, 1648589500);
 
-      let expiredVoting2 = await app.expiredVotings(2);
-      let expiredVoting3 = await app.expiredVotings(3);
-      let expiredVoting5 = await app.expiredVotings(5);
-      expect(expiredVoting2.result).to.equal("Adopted");
+      await app.getResult();
+
+      let expiredVoting2 = await app.expiredVotings(1);
+      let expiredVoting3 = await app.expiredVotings(2);
+      let expiredVoting5 = await app.expiredVotings(4);
+      expect(expiredVoting2.result).to.equal("Accepted");
       expect(expiredVoting3.result).to.equal("Rejected");
       expect(expiredVoting5.result).to.equal("Unresolved");
       // Check for '4' that wasn't expired
-      let expiredVoting4 = await app.expiredVotings(4);
+      let expiredVoting4 = await app.expiredVotings(3);
       expect(expiredVoting4.result).to.equal("");
     });
   });

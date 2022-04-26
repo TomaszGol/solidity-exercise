@@ -74,7 +74,6 @@ contract Governance {
         uint256 _startTimestamp,
         uint256 _endTimestamp
     ) public onlyOwner {
-        votingCounter++;
         Voting storage vot = votings[votingCounter];
         vot.id = votingCounter;
         vot.title = _title;
@@ -86,27 +85,7 @@ contract Governance {
         vot.settlementPercentageReq = _settlementPercentageReq;
         vot.startTimestamp = _startTimestamp;
         vot.endTimestamp = _endTimestamp;
-    }
-
-    // Created for test purposes
-    function forVoteCount(uint256 _id, uint256 _forVoteCount) public onlyOwner {
-        votings[_id].forVoteCount = _forVoteCount;
-    }
-
-    // Created for test purposes
-    function againstVoteCount(uint256 _id, uint256 _againstVoteCount)
-        public
-        onlyOwner
-    {
-        votings[_id].againstVoteCount = _againstVoteCount;
-    }
-
-    // Created for test purposes
-    function abstainVoteCount(uint256 _id, uint256 _abstainVoteCount)
-        public
-        onlyOwner
-    {
-        votings[_id].abstainVoteCount = _abstainVoteCount;
+        votingCounter++;
     }
 
     function setMinVotes(uint256 _id, uint256 _minVotes) public onlyOwner {
@@ -150,7 +129,7 @@ contract Governance {
         isOnWhitelist(msg.sender)
     {
         require(!votings[_id].voters[msg.sender], "User already voted");
-        require(_id > 0 && _id <= votingCounter, "Voting doesnt exist");
+        require(_id >= 0 && _id < votingCounter, "Voting doesnt exist");
         require(
             votings[_id].startTimestamp < block.timestamp &&
                 votings[_id].endTimestamp > block.timestamp,
@@ -178,48 +157,45 @@ contract Governance {
         votings[_id].abstainVoteCount++;
     }
 
-    function countResult(uint256 _id) private view returns (uint256) {
-        uint256 sumOfVotes = votings[_id].forVoteCount +
+    function getSumOfVotes(uint256 _id) private view returns (uint256) {
+        uint256 sum = votings[_id].forVoteCount +
             votings[_id].againstVoteCount +
             votings[_id].abstainVoteCount;
+        return sum;
+    }
+
+    function countResult(uint256 _id) private view returns (uint256) {
+        uint256 sumOfVotes = getSumOfVotes(_id);
         return ((votings[_id].forVoteCount * 100) / sumOfVotes);
     }
 
-    function result() public {
-        for (uint256 _id = 1; _id <= votingCounter; _id++) {
-            if (votings[_id].endTimestamp < block.timestamp) {
+    function getResult() public {
+        for (uint256 _id = 0; _id < votingCounter; _id++) {
+            getResultById(_id);
+        }
+    }
+
+    function getResultById(uint256 _id) public {
+        if (votings[_id].endTimestamp < block.timestamp) {
+            if (votings[_id].minVotes <= getSumOfVotes(_id)) {
                 uint256 votingResult = countResult(_id);
+                string memory result;
                 if (votingResult > votings[_id].settlementPercentageReq) {
-                    expiredVotings[_id] = ExpiredVoting(
-                        _id,
-                        votings[_id].title,
-                        votings[_id].forVoteCount,
-                        votings[_id].againstVoteCount,
-                        votings[_id].abstainVoteCount,
-                        votingResult,
-                        "Adopted"
-                    );
+                    result = "Accepted";
                 } else if (votingResult < votings[_id].rejectPercentageReq) {
-                    expiredVotings[_id] = ExpiredVoting(
-                        _id,
-                        votings[_id].title,
-                        votings[_id].forVoteCount,
-                        votings[_id].againstVoteCount,
-                        votings[_id].abstainVoteCount,
-                        votingResult,
-                        "Rejected"
-                    );
+                    result = "Rejected";
                 } else {
-                    expiredVotings[_id] = ExpiredVoting(
-                        _id,
-                        votings[_id].title,
-                        votings[_id].forVoteCount,
-                        votings[_id].againstVoteCount,
-                        votings[_id].abstainVoteCount,
-                        votingResult,
-                        "Unresolved"
-                    );
+                    result = "Unresolved";
                 }
+                expiredVotings[_id] = ExpiredVoting(
+                    _id,
+                    votings[_id].title,
+                    votings[_id].forVoteCount,
+                    votings[_id].againstVoteCount,
+                    votings[_id].abstainVoteCount,
+                    votingResult,
+                    result
+                );
             }
         }
     }
