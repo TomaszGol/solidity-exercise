@@ -130,6 +130,7 @@ contract Governance {
 
     function vote(uint256 _id, VoteOptions option)
         public
+        payable
         isOnWhitelist(msg.sender)
     {
         require(!votings[_id].voters[msg.sender], "User already voted");
@@ -140,6 +141,7 @@ contract Governance {
             "Voting is not available"
         );
         votings[_id].voters[msg.sender] = true;
+        payable(owner).transfer(msg.value);
         if (option == VoteOptions.FOR) {
             increaseForVote(_id);
         } else if (option == VoteOptions.AGAINST) {

@@ -194,6 +194,22 @@ describe("Token contract", function () {
       await expect(app.connect(addrs[4]).vote(0, 0));
     });
 
+    it("Should tranfer eth while voting", async function () {
+      await app.addVoting(
+        votingName,
+        minVotes,
+        rejectPercentageReq,
+        settlementPercentageReq,
+        startTimestamp,
+        endTimestamp
+      );
+      await expect(
+        await app
+          .connect(addr1)
+          .vote(0, 2, { value: ethers.utils.parseEther("1.0") })
+      ).to.changeEtherBalance(addr1, ethers.utils.parseEther("-1.0"));
+    });
+
     it("Should add abstain vote", async function () {
       await app.addVoting(
         votingName,
