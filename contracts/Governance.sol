@@ -16,6 +16,7 @@ contract Governance {
         uint256 settlementPercentageReq;
         uint256 startTimestamp;
         uint256 endTimestamp;
+        mapping(address => bool) voters;
     }
 
     struct ExpiredVoting {
@@ -36,8 +37,6 @@ contract Governance {
 
     uint256 public votingCounter;
 
-    mapping(address => bool) public voters;
-
     mapping(address => bool) private whitelist;
 
     modifier onlyOwner() {
@@ -52,6 +51,10 @@ contract Governance {
 
     constructor() {
         owner = msg.sender;
+        seed();
+    }
+
+    function seed() private {
         whitelist[0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266] = true;
         whitelist[0x70997970C51812dc3A010C7d01b50e0d17dc79C8] = true;
         whitelist[0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC] = true;
@@ -66,18 +69,29 @@ contract Governance {
         uint256 _endTimestamp
     ) public onlyOwner {
         votingCounter++;
-        votings[votingCounter] = Voting(
-            votingCounter,
-            _title,
-            0,
-            0,
-            0,
-            _minVotes,
-            _rejectPercentageReq,
-            _settlementPercentageReq,
-            _startTimestamp,
-            _endTimestamp
-        );
+        Voting storage vot = votings[votingCounter];
+        vot.id = votingCounter;
+        vot.title = _title;
+        vot.forVoteCount = 0;
+        vot.againstVoteCount = 0;
+        vot.abstainVoteCount = 0;
+        vot.minVotes = _minVotes;
+        vot.rejectPercentageReq = _rejectPercentageReq;
+        vot.settlementPercentageReq = _settlementPercentageReq;
+        vot.startTimestamp = _startTimestamp;
+        vot.endTimestamp = _endTimestamp;
+        // votings[votingCounter] = Voting(
+        //     votingCounter,
+        //     _title,
+        //     0,
+        //     0,
+        //     0,
+        //     _minVotes,
+        //     _rejectPercentageReq,
+        //     _settlementPercentageReq,
+        //     _startTimestamp,
+        //     _endTimestamp
+        // );
     }
 
     // Created for test purposes
@@ -138,14 +152,14 @@ contract Governance {
     }
 
     function vote(uint256 _id) public isOnWhitelist(msg.sender) {
-        require(!voters[msg.sender], "User already voted");
+        require(!votings[_id].voters[msg.sender], "User already voted");
         require(_id > 0 && _id <= votingCounter, "Voting doesnt exist");
         require(
             votings[_id].startTimestamp < block.timestamp &&
                 votings[_id].endTimestamp > block.timestamp,
             "Voting is not available"
         );
-        voters[msg.sender] = true;
+        votings[_id].voters[msg.sender] = true;
         votings[_id].abstainVoteCount++;
     }
 
@@ -153,14 +167,14 @@ contract Governance {
         public
         isOnWhitelist(msg.sender)
     {
-        require(!voters[msg.sender], "User already voted");
+        require(!votings[_id].voters[msg.sender], "User already voted");
         require(_id > 0 && _id <= votingCounter, "Voting doesnt exist");
         require(
             votings[_id].startTimestamp < block.timestamp &&
                 votings[_id].endTimestamp > block.timestamp,
             "Voting is not available"
         );
-        voters[msg.sender] = true;
+        votings[_id].voters[msg.sender] = true;
         if (forOrAgainst) {
             votings[_id].forVoteCount++;
         } else if (!forOrAgainst) {

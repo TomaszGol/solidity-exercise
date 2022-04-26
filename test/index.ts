@@ -27,7 +27,7 @@ describe("Token contract", function () {
   });
 
   describe("Governance", function () {
-    it("Should create and being writed to map", async function () {
+    it("Should create and be writed to map", async function () {
       await app.addVoting(
         votingName,
         minVotes,
@@ -95,7 +95,7 @@ describe("Token contract", function () {
       expect(voting.endTimestamp.toNumber()).to.equal(1648589900);
     });
 
-    it("Should return voting not availavle error", async function () {
+    it("Should return voting not available error", async function () {
       await app.addVoting(
         votingName,
         minVotes,
@@ -171,7 +171,7 @@ describe("Token contract", function () {
       expect(voting.againstVoteCount.toNumber()).to.equal(1);
     });
 
-    it("Should return voting error", async function () {
+    it("Should return user already voted", async function () {
       await app.addVoting(
         votingName,
         minVotes,
